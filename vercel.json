@@ -1,7 +1,19 @@
 {
-  "buildCommand": "npx vite build",
-  "devCommand": "npx vite",
+  "buildCommand": "npm run vercel-build",
+  "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
+  ]
 } 
