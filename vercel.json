@@ -3,5 +3,8 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "env": {
+    "NODE_VERSION": "18.19.0"
+  }
 } 
