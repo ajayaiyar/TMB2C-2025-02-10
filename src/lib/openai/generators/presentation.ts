@@ -26,7 +26,7 @@ export async function generatePresentation(data: PresentationFormData & {
 ## Grade ${data.grade}
 ## Textbook: ${data.textbook || data.subject}
 ## Chapters Covered:
-${data.chapters.map(ch => `- ${ch.title}`).join('\n')}
+${data.chapters.map((ch, index) => `${index + 1}) ${ch.title}`).join('\n')}
 
 ### Presentation Information
 1. Number of Slides: ${data.slideCount}
@@ -39,72 +39,126 @@ ${data.chapters.map(ch => `- ${ch.title}`).join('\n')}
 #### Slide 1: Title
 1. Title: ${data.subject} - ${data.topic}
 2. Subtitle: Grade ${data.grade}
-3. Brief Overview
+3. Brief Overview of Topics
+4. Visual Element: Subject-related imagery or diagram
 
 #### Slide 2: Learning Objectives
 1. Knowledge Objectives
+   (a) Key concepts to be mastered
+   (b) Fundamental principles
 2. Skill Objectives
+   (a) Practical applications
+   (b) Problem-solving abilities
 3. Application Objectives
+   (a) Real-world connections
+   (b) Cross-disciplinary links
 
-#### Slide 3-4: Introduction
-1. Key Concepts
-2. Prior Knowledge Connection
-3. Real-world Applications
+#### Slide 3: Introduction
+1. Chapter Overview
+2. Key Terms Introduction
+3. Prior Knowledge Activation
+4. Visual Element: Concept Map
 
-#### Slide 5-${data.slideCount - 3}: Main Content
-1. Topic Breakdown
-   (a) Concept explanation
-   (b) Visual aids
-   (c) Examples
+#### Slide 4: Prior Knowledge
+1. Review of Prerequisites
+2. Connection to Previous Topics
+3. Quick Review Questions
+4. Visual Element: Knowledge Bridge Diagram
 
-2. Interactive Elements
-   (a) Discussion points
-   (b) Student activities
-   (c) Check for understanding
+${Array.from({ length: data.slideCount - 6 }, (_, i) => `
+#### Slide ${i + 5}: Main Content
+1. Topic: [Chapter-specific content]
+2. Key Concepts
+   (a) Detailed explanation
+   (b) Examples
+   (c) Illustrations
+3. Practice Elements
+   (a) Quick check
+   (b) Discussion point
+4. Visual Element: [Topic-specific visualization]`).join('\n')}
+
+#### Slide ${data.slideCount - 1}: Summary
+1. Key Points Review
+2. Learning Outcomes Achieved
+3. Connection to Next Topics
+4. Visual Element: Summary Infographic
+
+#### Slide ${data.slideCount}: Assessment
+1. Review Questions
+2. Practice Problems
+3. Discussion Topics
+4. Visual Element: Assessment Framework
 
 ${data.includeActivities ? `
-### Learning Activities
+### Learning Activities (Integrated into relevant content slides)
 1. Individual Activities
-   (a) Practice exercises
-   (b) Concept mapping
-   (c) Problem-solving
+   (a) Practice exercises with solutions
+   (b) Concept mapping activities
+   (c) Self-assessment questions
 
 2. Group Activities
-   (a) Discussions
-   (b) Presentations
-   (c) Projects` : ''}
+   (a) Peer discussions with prompts
+   (b) Collaborative problem-solving
+   (c) Group presentation topics` : ''}
 
 ${data.includeAssessment ? `
-### Assessment Components
+### Assessment Components (Integrated into relevant slides)
 1. Formative Assessment
-   (a) Quick questions
-   (b) Concept checks
-   (c) Exit tickets
+   (a) Quick concept checks
+   (b) Understanding probes
+   (c) Exit ticket questions
 
 2. Summative Assessment
-   (a) Practice problems
-   (b) Application questions
+   (a) Chapter-end problems
+   (b) Application scenarios
    (c) Project guidelines` : ''}
 
-### Visual Elements
+### Visual Elements Guide
 1. Suggested Diagrams
+   (a) Concept maps
+   (b) Process flows
+   (c) Comparison charts
 2. Chart Types
+   (a) Data visualizations
+   (b) Relationship diagrams
+   (c) Timeline progressions
 3. Illustration Ideas
+   (a) Real-world examples
+   (b) Step-by-step processes
+   (c) Visual analogies
 
 ${data.additionalInstructions ? `### Additional Instructions\n${data.additionalInstructions}` : ''}`;
 
-  const systemPrompt = `You are an expert teacher who creates engaging and educational presentation outlines following NCERT guidelines.
+const systemPrompt = `You are an expert teacher who creates engaging and educational presentation outlines following NCERT guidelines.
 
 CRITICAL FORMATTING RULES:
 1. NEVER start any line with special characters
 2. NO dashes (-) at the start of any line
 3. NO asterisks (*) at the start of any line
 4. NO bullet points (•) at the start of any line
+5. Each slide should be self-contained with complete content
+6. Use descriptive titles for each slide
+7. Include specific visual elements for each slide
+
+MATHEMATICAL AND SCIENTIFIC NOTATION:
+1. Use LaTeX for complex mathematical expressions:
+   (a) Wrap in $...$ for inline math
+   (b) Wrap in $$...$$ for display math
+   (c) Example: $\\frac{dx}{dt}$ for derivatives
+   (d) Example: $$\\int_0^\\infty e^{-x^2} dx$$ for equations
+2. Use Unicode for simple symbols:
+   (a) Use × (U+00D7) for multiplication
+   (b) Use ÷ (U+00F7) for division
+   (c) Use ° (U+00B0) for degrees
+   (d) Use ² (U+00B2) for squared
+   (e) Use ³ (U+00B3) for cubed
+   (f) Use μ (U+03BC) for micro
 
 ALWAYS use these formats:
 1. For sequential items: Use numbers followed by period (1., 2., 3.)
 2. For sub-points: Use letters in parentheses ((a), (b), (c))
 3. For slide content: Use numbers (1., 2., 3.)
+4. Include visual element description for each slide
 
 Document Structure:
 1. Use # for main title
@@ -113,19 +167,23 @@ Document Structure:
 4. Use #### for slides
 5. Use **text** for emphasis (but never at start of line)
 
-Ensure all content:
-1. Covers content from ALL listed chapters
-2. Is visually engaging
-3. Follows logical progression
-4. Includes clear examples
-5. Is age-appropriate
-6. Aligns with NCERT guidelines`;
+Content Guidelines:
+1. Each slide should have clear, specific content
+2. Include relevant examples and illustrations
+3. Maintain logical flow between slides
+4. Balance text and visual elements
+5. Incorporate interactive elements where appropriate
+6. Align with age-appropriate learning objectives
+7. Follow NCERT curriculum guidelines
+8. Include specific chapter references
+9. Provide clear learning outcomes
+10. Include practical applications`;
 
-  const content = await ContentGenerationService.generate(prompt, {
-    systemPrompt,
-    maxTokens: 2000,
-    temperature: 0.7
-  });
+const content = await ContentGenerationService.generate(prompt, {
+  systemPrompt,
+  maxTokens: 2000,
+  temperature: 0.7
+});
 
-  return content + DISCLAIMER;
+return content + DISCLAIMER;
 }

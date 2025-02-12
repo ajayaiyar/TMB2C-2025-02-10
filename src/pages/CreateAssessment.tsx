@@ -11,6 +11,7 @@ interface CurriculumData {
   subject: Subject;
   grade: Grade;
   chapters: Chapter[];
+  textbook: string;
 }
 
 export default function CreateAssessment() {
@@ -21,12 +22,22 @@ export default function CreateAssessment() {
   const handleSubmit = async (formData: any) => {
     setError(null);
     try {
+      // Ensure we have chapter information
+      if (!formData.isFullSyllabus && (!formData.chapters || formData.chapters.length === 0)) {
+        throw new Error('Please select at least one chapter for the assessment');
+      }
+
       const response = await generateAssessment({
         ...formData,
-        topic: formData.isFullSyllabus ? 'full_syllabus' : formData.chapters.map((ch: Chapter) => ch.title).join(', '),
+        topic: formData.isFullSyllabus 
+          ? 'Full Syllabus' 
+          : formData.chapters.map((ch: Chapter) => ch.title).join(', '),
         subject: formData.subject,
         grade: formData.grade,
-        chapters: formData.chapters
+        chapters: formData.isFullSyllabus 
+          ? [] // For full syllabus, we don't specify chapters
+          : formData.chapters,
+        textbook: formData.textbook
       });
 
       if (!response.success || !response.data) {
@@ -36,7 +47,10 @@ export default function CreateAssessment() {
       setCurriculumData({
         subject: formData.subject,
         grade: formData.grade,
-        chapters: formData.chapters
+        chapters: formData.isFullSyllabus 
+          ? [{ title: 'As per syllabus', number: '', textbook: formData.textbook }] 
+          : formData.chapters,
+        textbook: formData.textbook
       });
       setResult(response.data.content);
     } catch (err) {

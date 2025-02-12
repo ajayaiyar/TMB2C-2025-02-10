@@ -12,6 +12,7 @@ export async function generateAssessment(data: AssessmentFormData & {
   chapters: Chapter[];
   textbook?: string;
   section?: string;
+  isFullSyllabus: boolean;
 }): Promise<GenerationResult> {
   // Debug logging
   console.log('Assessment Generation Data:', {
@@ -20,7 +21,8 @@ export async function generateAssessment(data: AssessmentFormData & {
     chapters: data.chapters,
     textbook: data.textbook,
     section: data.section,
-    topic: data.topic
+    topic: data.topic,
+    isFullSyllabus: data.isFullSyllabus
   });
 
   const chaptersSection = data.chapters.map(chapter => `- ${chapter.title}`).join('\n');
@@ -30,11 +32,10 @@ export async function generateAssessment(data: AssessmentFormData & {
 # ${data.subject} ${data.assessmentType.charAt(0).toUpperCase() + data.assessmentType.slice(1)}
 ## Grade ${data.grade}
 ## Textbook: ${data.textbook || data.subject}
-${data.section ? `## Section: ${data.section} (for guidance)` : ''}
-## Chapters Covered:
-${chaptersSection}
+## Chapters:
+${data.isFullSyllabus ? 'As per syllabus' : data.chapters.map((ch, index) => `${index + 1}) ${ch.title}`).join('\n')}
 
-### General Information
+### Assessment Information
 1. Duration: ${data.duration}
 2. Total Marks: ${data.totalMarks}
 3. Question Types: ${data.sectionTypes.join(', ')}

@@ -31,7 +31,13 @@ export const useContentStore = create<ContentState>((set) => ({
   saveContent: async (data) => {
     set({ loading: true, error: null });
     try {
-      await ContentService.saveContent(data);
+      // Ensure chapter field is never empty
+      const contentData = {
+        ...data,
+        chapter: data.chapter?.trim() || 'As per syllabus'
+      };
+      
+      await ContentService.saveContent(contentData);
       // Refresh content list after saving
       const content = await ContentService.getRecentContent();
       set({ recentContent: content });

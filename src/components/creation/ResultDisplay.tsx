@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useContentStore } from '../../store/contentStore';
 import { ExportMenu } from '../ui/ExportMenu';
 import { Alert } from '../ui/Alert';
-import { ShareToClassroom } from '../classroom/ShareToClassroom';
+import { MathContent } from '../ui/MathContent';
 import type { Grade, Subject } from '../../utils/constants';
 import type { Chapter } from '../../utils/ncertData';
 import type { ContentInsert } from '../../lib/supabase/services/content/types';
@@ -43,18 +43,20 @@ export function ResultDisplay({
 
   useEffect(() => {
     const saveGeneratedContent = async () => {
-      if (!content || !curriculumData) return;
+      if (!content || !curriculumData || saveStatus === 'saved') return;
 
       try {
         setSaveStatus('saving');
+        const chapterText = contentType === 'pedagogy' 
+          ? curriculumData.topic || ''
+          : curriculumData.chapters?.map(ch => ch.title).join(', ') || 'As per syllabus';
+
         const contentData: Omit<ContentInsert, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
           type: contentType,
           content,
           subject: curriculumData.subject,
           grade: curriculumData.grade,
-          chapter: contentType === 'pedagogy' 
-            ? curriculumData.topic || ''
-            : curriculumData.chapters?.map(ch => ch.title).join(', ') || '',
+          chapter: chapterText,
           metadata: {
             timestamp: new Date().toISOString(),
             version: '1.0',
@@ -66,7 +68,7 @@ export function ResultDisplay({
                     title: ch.title,
                     number: ch.number,
                     textbook: ch.textbook
-                  }))
+                  })) || [{ title: 'As per syllabus', number: '', textbook: curriculumData.textbook }]
                 }
             )
           }
@@ -86,10 +88,10 @@ export function ResultDisplay({
       }
     };
 
-    if (content && curriculumData) {
+    if (content && curriculumData && saveStatus !== 'saved') {
       saveGeneratedContent();
     }
-  }, [content, curriculumData, contentType, saveContent, retryCount, maxRetries]);
+  }, [content, curriculumData, contentType, saveContent, retryCount, maxRetries, saveStatus]);
 
   const handleRetrySave = () => {
     setRetryCount(0);
@@ -125,9 +127,7 @@ export function ResultDisplay({
       )}
 
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="prose max-w-none whitespace-pre-wrap">
-          {content}
-        </div>
+        <MathContent content={content} />
       </div>
 
       {saveStatus === 'saving' && (
@@ -156,15 +156,8 @@ export function ResultDisplay({
         </Alert>
       )}
 
-      <div className="mt-8 flex justify-between items-center">
+      <div className="mt-8">
         <ExportMenu content={content} type={contentType} />
-        {(contentType === 'quiz' || contentType === 'worksheet') && curriculumData && (
-          <ShareToClassroom 
-            content={content} 
-            title={title}
-            type={contentType}
-          />
-        )}
       </div>
 
       <div className="mt-6 pt-4 border-t border-gray-200 text-sm text-gray-500 italic">

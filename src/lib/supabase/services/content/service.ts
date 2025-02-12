@@ -13,8 +13,10 @@ export class ContentService {
     if (!data.content?.trim()) {
       throw new Error('Content cannot be empty');
     }
+    
+    // Ensure chapter field is never empty
     if (!data.chapter?.trim()) {
-      throw new Error('Chapter cannot be empty');
+      data.chapter = 'As per syllabus';
     }
 
     try {

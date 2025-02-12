@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { PageLayout } from '../components/ui/PageLayout';
 import { PageHeader } from '../components/ui/PageHeader';
 import { ContentCreationForm } from '../components/creation/ContentCreationForm';
@@ -20,17 +20,30 @@ export default function CreatePresentation() {
   const [step, setStep] = useState<'curriculum' | 'details'>('curriculum');
   const [curriculumData, setCurriculumData] = useState<CurriculumData | null>(null);
   const [result, setResult] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCurriculumSelect = (data: CurriculumData) => {
-    setCurriculumData(data);
+  const handleCurriculumSelect = async (data: { subject: Subject; grade: Grade; chapters?: Chapter[]; textbook?: string; topic?: string }) => {
+    if (!data.chapters || !data.textbook) {
+      setError('Please select at least one chapter');
+      return Promise.reject(new Error('Please select at least one chapter'));
+    }
+    
+    setCurriculumData({
+      subject: data.subject,
+      grade: data.grade,
+      chapters: data.chapters,
+      textbook: data.textbook
+    });
     setStep('details');
+    return Promise.resolve();
   };
 
   const handleContentSubmit = async (formData: PresentationFormData) => {
     if (!curriculumData) return;
     
-    setError(null);
+    setError(undefined);
+    setIsLoading(true);
     try {
       const response = await generatePresentation({
         ...formData,
@@ -45,6 +58,8 @@ export default function CreatePresentation() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate presentation');
       console.error('Presentation generation error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -62,7 +77,12 @@ export default function CreatePresentation() {
             </div>
           )}
           {step === 'curriculum' ? (
-            <ContentCreationForm onNext={handleCurriculumSelect} />
+            <ContentCreationForm 
+              onSubmit={handleCurriculumSelect}
+              contentType="standard"
+              error={error}
+              isLoading={isLoading}
+            />
           ) : curriculumData && (
             <PresentationForm 
               onSubmit={handleContentSubmit}
@@ -76,7 +96,7 @@ export default function CreatePresentation() {
           )}
           <ResultDisplay 
             content={result} 
-            type="presentation"
+            contentType="presentation"
             curriculumData={curriculumData}
           />
         </div>

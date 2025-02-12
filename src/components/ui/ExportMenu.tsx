@@ -1,57 +1,88 @@
-import React, { useState } from 'react';
-import { Download, FileText, FileType, Chrome } from 'lucide-react';
-import { exportContent, ExportFormat } from '../../utils/export';
+import { useState } from 'react';
+import { exportContent } from '../../utils/export';
+import { ClipboardIcon, ArrowDownTrayIcon, DocumentTextIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 interface ExportMenuProps {
   content: string;
   type: string;
+  onNew?: () => void;
 }
 
-export function ExportMenu({ content, type }: ExportMenuProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function ExportMenu({ content, type, onNew }: ExportMenuProps) {
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
-  const handleExport = async (format: ExportFormat) => {
-    const exporter = await exportContent({ content, type });
-    exporter[format]();
-    setIsOpen(false);
+  const handleExportPPTX = async () => {
+    try {
+      await exportContent({
+        content,
+        type,
+        format: 'pptx'
+      });
+    } catch (error) {
+      console.error('Error exporting to PPTX:', error);
+    }
+  };
+
+  const handleExportRTF = async () => {
+    try {
+      await exportContent({
+        content,
+        type,
+        format: 'rtf'
+      });
+    } catch (error) {
+      console.error('Error exporting to RTF:', error);
+    }
+  };
+
+  const handleCopyContent = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopyStatus('copied');
+      setTimeout(() => setCopyStatus('idle'), 2000);
+    } catch (error) {
+      console.error('Error copying content:', error);
+      setCopyStatus('error');
+      setTimeout(() => setCopyStatus('idle'), 2000);
+    }
   };
 
   return (
-    <div className="relative">
+    <div className="flex space-x-4">
+      {type === 'presentation' && (
+        <button
+          onClick={handleExportPPTX}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <ArrowDownTrayIcon className="mr-2 h-5 w-5" />
+          Export to Presentation
+        </button>
+      )}
+
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+        onClick={handleExportRTF}
+        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
       >
-        <Download className="h-4 w-4 mr-2" />
-        Export
+        <DocumentTextIcon className="mr-2 h-5 w-5" />
+        Export to RTF
       </button>
 
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-          <div className="py-1" role="menu">
-            <button
-              onClick={() => handleExport('txt')}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Plain Text (.txt)
-            </button>
-            <button
-              onClick={() => handleExport('rtf')}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <FileType className="h-4 w-4 mr-2" />
-              Rich Text (.rtf)
-            </button>
-            <button
-              onClick={() => handleExport('gdoc')}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <Chrome className="h-4 w-4 mr-2" />
-              Google Docs
-            </button>
-          </div>
-        </div>
+      <button
+        onClick={handleCopyContent}
+        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      >
+        <ClipboardIcon className="mr-2 h-5 w-5" />
+        {copyStatus === 'copied' ? 'Copied!' : copyStatus === 'error' ? 'Error!' : 'Copy Content'}
+      </button>
+
+      {onNew && (
+        <button
+          onClick={onNew}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <PlusIcon className="mr-2 h-5 w-5" />
+          Create New
+        </button>
       )}
     </div>
   );
